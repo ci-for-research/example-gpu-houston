@@ -1,46 +1,177 @@
-| Five recommendations for fair software from [fair-software.nl](https://fair-software.nl) | Badges |
-| --- | --- |
-| 1. Code repository | [![GitHub badge](https://img.shields.io/badge/github-repo-000.svg?logo=github&labelColor=gray&color=blue)](https://github.com/NLESC-JCER/linux_actions_runner/) |
-| 2. License | [![License badge](https://img.shields.io/github/license/NLESC-JCER/linux_actions_runner)](https://github.com/NLESC-JCER/linux_actions_runner/) |
-| 3. Community registry | [![Ansible Galaxy badge](https://img.shields.io/badge/galaxy-fixme.fixme-660198.svg)](https://galaxy.ansible.com/fixme/fixme) |
-| 4. Enable citation | [![DOI](https://zenodo.org/badge/DOI/10.0000/FIXME.svg)](https://doi.org/10.0000/FIXME) |
-| 5. Checklist | ? |
+## Intro
 
-This repository explains how to set up a server for running continuous integration tests on other hardware than what
-GitHub provides. This can be useful when the code you want to test has special requirements, for example if
+This short guide shows how to install Nvidia drivers and CUDA for GRID K2 hardware. For more information about GPUs on SURF HPC Cloud please visit [SURF HPC Documentation](https://doc.hpccloud.surfsara.nl/gpu-attach).
 
-- it needs a GPU to run
-- it needs multiple nodes
-- testing requires data that needs to stay on-premises for privacy reasons or legal reasons
-- testing requires data that is too big to move
-- testing requires specific software
+We have 2 methods to install Nvidia drivers and Cuda.
+- Using ansible playbook
+- Following the steps and installing manually
 
-This guide distinguishes between the _client_ and the _server_; the client is your own machine; the server is whichever
-machine runs the tests. For either side, we'll explain what configuration needs to be done. For people who just want to
-try out the instructions but don't have access to remote hardware, we included a few alternatives for running the server
-locally as well, through the use of virtualization (with VirtualBox) and containerization (with Docker).
+## 1- Installation using ansible playbook
 
-For the client, we included instructions for Linux Ubuntu, Mac, and Windows; the server-side instructions all assume
-Linux Ubuntu.
+The command below runs the ansible-playbook and installs all necassary software. This ansible-playbook is specifically written for SURF HPC Cloud platform and GRID K2 hardware. However, it can easily be adapted for different platforms and graphics cards.
 
-| client OS | server hardware | Link |
-| --- | --- | --- |
-| Linux Ubuntu | remote machine at [SURF HPC Cloud] | [link](ubuntu-surf-hpc-cloud/README.md) |
-| Linux Ubuntu | local machine via Docker           | [link](ubuntu-docker/README.md) |
-| Linux Ubuntu | local machine via VirtualBox       | [link](ubuntu-virtualbox/README.md) |
-| Linux Ubuntu | local machine via Vagrant          | [link](ubuntu-vagrant/README.md) |
-| Mac          | remote machine at [SURF HPC Cloud] | - |
-| Mac          | local machine via Docker           | - |
-| Mac          | local machine via VirtualBox       | - |
-| Windows      | remote machine at [SURF HPC Cloud] | - |
-| Windows      | local machine via Docker           | - |
-| Windows      | local machine via VirtualBox       | - |
+```shell
+ANSIBLE_HOST_KEY_CHECKING=False  docker run --rm -ti -v $PWD:/nlesc -v $YOUR_PRIVATE_KEY:/nlesc/id_rsa_ci_sprint  ansible/ansible-runner  ansible-playbook --become-user=ubuntu --inventory-file /nlesc/GPU/inventory /nlesc/GPU/install_cuda_grid2k.yml --private-key=/nlesc/id_rsa_ci_sprint --verbose
+```
+
+You will need to change ``$YOUR_PRIVATE_KEY`` with full path of your private key and ``inventory`` file which has to connection details of the server.
+
+## 2- Manual installation
+
+## Requirements
+
+Cuda currently officially supports only two versions of Ubuntu: 18.04 and 16.04. This instructions were tested on Ubuntu 18.04.
+
+## System info
+
+Distribution info
+
+```shell
+lsb_release -a
+No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 18.04.4 LTS
+Release:        18.04
+Codename:       bionic
+```
+
+Kernel version
+
+```shell
+uname -a
+Linux packer-Ubuntu-18 4.15.0-101-generic #102-Ubuntu SMP Mon May 11 10:07:26 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
+```
+
+GPU hardware information
+
+```shell
+lspci | grep -i nvidia
+01:01.0 VGA compatible controller: NVIDIA Corporation GK104GL [GRID K2] (rev a1)
+```
+
+## Pre install
+
+For Grid K2 card we will need Cuda 8.0. Cuda 8.0 only works with only gcc 5.0 so it should be installed before.
+
+To decide what version of cuda and Nvidia drivers you need, please check the links below.
+
+See what drivers you need:
+https://www.nvidia.com/Download/index.aspx?lang=en-us
+
+Check compatibility first:
+https://docs.nvidia.com/deploy/cuda-compatibility/index.html
+
+```shell
+apt install gcc-5 g++-5
+```
+
+## Install
+
+### Install Nvidia drivers
+
+Download Nvidia driver (version 367) and install it.
+
+```shell
+wget http://us.download.nvidia.com/XFree86/Linux-x86_64/367.134/NVIDIA-Linux-x86_64-367.134.run
+sh ./NVIDIA-Linux-x86_64-367.134.run --accept-license  -s
+```
+
+### Install Cuda
+
+Download Cuda 8.0 installer
+```
+# wget https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run
+```
+
+Download Patch release:
+
+```shell
+wget https://developer.nvidia.com/compute/cuda/8.0/Prod2/patches/2/cuda_8.0.61.2_linux-run
+```
+
+### Fix Perl issue
+
+While installing Cuda, we had some issues related to Perl scripts.
+See: https://forums.developer.nvidia.com/t/cant-locate-installutils-pm-in-inc/46952/10
 
 
-[SURF HPC Cloud]: https://userinfo.surfsara.nl/systems/hpc-cloud
+These commands solves the Perl issues.
 
-    
-    
-    
+```shell
+sh ./cuda_8.0.61_375.26_linux-run  --tar mxvf
+cp InstallUtils.pm /usr/lib/x86_64-linux-gnu/perl-base/
+export $PERL5LIB
+rm -rf InstallUtils.pm cuda-installer.pl run_files uninstall_cuda.pl
+```
 
+### Install Cuda
 
+After fixing the Perl issue, we can install Cuda.
+
+```shell
+sh ./cuda_8.0.61_375.26_linux-run --silent --samples --toolkit --override --verbose
+```
+
+### Environment variables
+
+In order to be able to use Cuda, we need to change our environment variables.
+
+Add the lines below to .profile file.
+
+```shell
+export PATH=$PATH:/usr/local/cuda-8.0/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-8.0/lib64
+```
+
+## Test the installation
+
+### Cuda compiler
+
+Check the cuda compiler version.
+
+```shell
+nvcc --version
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2017 NVIDIA Corporation
+Built on Fri_Nov__3_21:07:56_CDT_2017
+Cuda compilation tools, release 9.1, V9.1.85
+```
+
+### Compile and test Hello World example
+
+Save the example code below as `hello_world.cu`.
+
+```cpp
+#include<stdio.h>
+#include<stdlib.h>
+
+__global__ void print_gpu(void) {
+    printf("Houston, we have a problem in section [%d,%d] \
+        From Apollo 13\n", threadIdx.x,blockIdx.x);
+}
+
+int main(void) {
+    printf("This is Houston. Say again, please. \
+                From Base\n");
+    print_gpu<<<2,2>>>();
+    cudaDeviceSynchronize();
+    return 0;
+}
+```
+
+Compile the example:
+
+```shell
+nvcc -o hello_world.exe hello_world.cu
+```
+
+Run the example:
+
+```shell
+./hello
+This is Houston. Say again, please.                 From Base
+Houston, we have a problem in section [0,0]         From Apollo 13
+Houston, we have a problem in section [1,0]         From Apollo 13
+Houston, we have a problem in section [0,1]         From Apollo 13
+Houston, we have a problem in section [1,1]         From Apollo 13
+```
