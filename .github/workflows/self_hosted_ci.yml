@@ -7,7 +7,15 @@ jobs:
     name: test
     runs-on: self-hosted
     steps:
+
+      - uses: actions/checkout@v2
       - name: Show directory listing
         shell: bash -l {0}
         run: |
           ls -la
+      - name: Compile example
+        run: |
+          nvcc -o hello_houston.exe hello_houston.cu
+      - name: Run example
+        run: |
+          nvcc -o hello_houston.exe hello_houston.cu
