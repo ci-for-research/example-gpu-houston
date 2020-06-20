@@ -23,4 +23,4 @@ jobs:
           nvcc -o hello_houston.exe hello_houston.cu
       - name: Run example
         run: |
-          nvcc -o hello_houston.exe hello_houston.cu
+          ./hello_houston.exe
