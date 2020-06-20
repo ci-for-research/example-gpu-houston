@@ -13,8 +13,13 @@ jobs:
         shell: bash -l {0}
         run: |
           ls -la
+      - name: Cuda compiler version
+        run: |
+          . /etc/profile.d/cuda.sh
+          nvcc --version
       - name: Compile example
         run: |
+          . /etc/profile.d/cuda.sh
           nvcc -o hello_houston.exe hello_houston.cu
       - name: Run example
         run: |
