@@ -13,6 +13,8 @@ jobs:
         shell: bash -l {0}
         run: |
           ls -la
+      - name: Show graphics cards
+        shell: lspci | grep ' VGA '
       - name: Cuda compiler version
         run: |
           . /etc/profile.d/cuda.sh
