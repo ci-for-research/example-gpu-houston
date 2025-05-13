@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   test:
     name: test
-    runs-on: self-hosted
+    runs-on: ubicloud-gpu
     steps:
 
       - uses: actions/checkout@v2
@@ -13,6 +13,8 @@ jobs:
         shell: bash -l {0}
         run: |
           ls -la
+      - name: Smi
+        run: nvidia-smi
       - name: Cuda compiler version
         run: |
           . /etc/profile.d/cuda.sh
