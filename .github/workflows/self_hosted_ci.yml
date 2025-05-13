@@ -1,25 +1,23 @@
 name: Self-hosted CI example
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - ubicloud
 
 jobs:
   test:
     name: test
-    runs-on: self-hosted
+    runs-on: ubicloud-gpu
     steps:
-
       - uses: actions/checkout@v2
-      - name: Show directory listing
-        shell: bash -l {0}
-        run: |
-          ls -la
+      - name: Smi
+        run: nvidia-smi
       - name: Cuda compiler version
         run: |
-          . /etc/profile.d/cuda.sh
           nvcc --version
       - name: Compile example
         run: |
-          . /etc/profile.d/cuda.sh
           nvcc -o hello_houston.exe hello_houston.cu
       - name: Run example
         run: |
