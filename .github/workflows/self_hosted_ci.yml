@@ -11,10 +11,6 @@ jobs:
     runs-on: ubicloud-gpu
     steps:
       - uses: actions/checkout@v2
-      - name: Show directory listing
-        shell: bash -l {0}
-        run: |
-          ls -la
       - name: Smi
         run: nvidia-smi
       - name: Cuda compiler version
