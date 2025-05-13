@@ -10,7 +10,6 @@ jobs:
     name: test
     runs-on: ubicloud-gpu
     steps:
-
       - uses: actions/checkout@v2
       - name: Show directory listing
         shell: bash -l {0}
