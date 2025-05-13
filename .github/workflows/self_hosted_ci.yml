@@ -15,11 +15,9 @@ jobs:
         run: nvidia-smi
       - name: Cuda compiler version
         run: |
-          . /etc/profile.d/cuda.sh
           nvcc --version
       - name: Compile example
         run: |
-          . /etc/profile.d/cuda.sh
           nvcc -o hello_houston.exe hello_houston.cu
       - name: Run example
         run: |
