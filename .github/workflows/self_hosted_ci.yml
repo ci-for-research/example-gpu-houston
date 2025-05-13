@@ -1,11 +1,14 @@
-name: Self-hosted CI example
+le
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - ubicloud
 
 jobs:
   test:
     name: test
-    runs-on: ubicloud-gpu
+    runs-on: ubicloud
     steps:
 
       - uses: actions/checkout@v2
