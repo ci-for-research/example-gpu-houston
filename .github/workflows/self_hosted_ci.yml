@@ -1,4 +1,4 @@
-le
+name: Self-hosted CI example
 
 on:
   push:
